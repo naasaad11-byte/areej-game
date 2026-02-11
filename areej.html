@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لعبة أسئلة + متجر كاواي 🎀</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:white;
+}
+#gameBox{
+  background:rgba(0,0,0,0.4);
+  padding:30px;
+  border-radius:20px;
+  width:550px;
+  text-align:center;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+h2{
+  margin-bottom:20px;
+}
+button{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  transition:0.3s;
+}
+button:hover{
+  transform:scale(1.05);
+}
+.correct{
+  background:green !important;
+}
+.wrong{
+  background:red !important;
+}
+#timer{
+  font-size:18px;
+  margin-bottom:10px;
+}
+#score,#money{
+  margin-top:10px;
+  font-weight:bold;
+}
+#nextBtn{
+  background:#ff9800;
+  display:none;
+  padding:10px 0;
+  width:100%;
+  border-radius:10px;
+  border:none;
+  margin-top:10px;
+  cursor:pointer;
+}
+#shop{
+  margin-top:20px;
+  text-align:left;
+  background:rgba(255,255,255,0.1);
+  padding:15px;
+  border-radius:10px;
+}
+#shop h3{
+  margin-top:0;
+}
+.shopItem{
+  display:flex;
+  justify-content:space-between;
+  margin:5px 0;
+}
+.shopItem button{
+  width:80px;
+  background:#ffc0cb;
+}
+#nameInputBox{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:20px;
+}
+#nameInputBox input{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  width:80%;
+  font-size:16px;
+  margin-bottom:10px;
+}
+#nameInputBox button{
+  width:50%;
+  background:#ff69b4;
+  color:white;
+}
+</style>
+</head>
+<body>
+
+<div id="gameBox">
+  <div id="nameInputBox">
+    <h2>🎀 أدخلي اسمك للعبة</h2>
+    <input type="text" id="playerName" placeholder="اكتبي اسمك هنا">
+    <button onclick="startGame()">ابدأي اللعبة</button>
+  </div>
+
+  <div id="mainGame" style="display:none;">
+    <h2 id="welcome"></h2>
+    <div id="timer">⏳ الوقت: 30</div>
+    <div id="question"></div>
+    <div id="answers"></div>
+    <button id="nextBtn" onclick="nextStage()">المرحلة التالية</button>
+    <div id="score">النقاط: 0</div>
+    <div id="money">فلوسك: 0 💰</div>
+
+    <div id="shop">
+      <h3>🛍 متجر الدمى</h3>
+      <div class="shopItem">
+        <span>Hello Kitty</span><span>50 💰</span><button onclick="buy('Hello Kitty',50)">شراء</button>
+      </div>
+      <div class="shopItem">
+        <span>Kuromi</span><span>60 💰</span><button onclick="buy('Kuromi',60)">شراء</button>
+      </div>
+      <div class="shopItem">
+        <span>My Melody</span><span>40 💰</span><button onclick="buy('My Melody',40)">شراء</button>
+      </div>
+      <div class="shopItem">
+        <span>Conan</span><span>70 💰</span><button onclick="buy('Conan',70)">شراء</button>
+      </div>
+      <div class="shopItem">
+        <span>دبدوب كيوت</span><span>30 💰</span><button onclick="buy('دبدوب كيوت',30)">شراء</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let stages = [
+  {question:"كم عدد أيام الأسبوع؟",options:["5","7","10","12"],answer:"7"},
+  {question:"ما هي عاصمة فرنسا؟",options:["باريس","لندن","روما","برلين"],answer:"باريس"},
+  {question:"أي كوكب يُعرف بالكوكب الأحمر؟",options:["الأرض","المريخ","المشتري","الزهرة"],answer:"المريخ"},
+  {question:"كم عدد القارات في العالم؟",options:["5","6","7","8"],answer:"7"},
+  {question:"ما هو الحيوان الأسرع على الأرض؟",options:["الفهد","الأسد","الذئب","الزرافة"],answer:"الفهد"}
+];
+
+let currentStage = 0;
+let score = 0;
+let money = 0;
+let timer;
+let timeLeft = 30;
+let player = "";
+
+function startGame(){
+  let input = document.getElementById("playerName").value.trim();
+  if(input === ""){
+    alert("رجاءً اكتبي اسمك قبل البدء!");
+    return;
+  }
+  player = input;
+  document.getElementById("nameInputBox").style.display = "none";
+  document.getElementById("mainGame").style.display = "block";
+  document.getElementById("welcome").innerText = "مرحباً، " + player + " 🎀";
+  loadStage();
+}
+
+function startTimer(){
+  timeLeft = 30;
+  document.getElementById("timer").innerText = "⏳ الوقت: " + timeLeft;
+  timer = setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").innerText = "⏳ الوقت: " + timeLeft;
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      showCorrectAnswer();
+    }
+  },1000);
+}
+
+function loadStage(){
+  clearInterval(timer);
+  document.getElementById("nextBtn").style.display="none";
+  document.getElementById("answers").innerHTML="";
+  if(currentStage >= stages.length){
+    document.getElementById("question").innerHTML = "🎉 انتهت اللعبة! " + player + " مجموع نقاطك: " + score + " وفلوسك: " + money + " 💰";
+    document.getElementById("timer").style.display="none";
+    document.getElementById("answers").style.display="none";
+    document.getElementById("nextBtn").style.display="none";
+    return;
+  }
+  let stage = stages[currentStage];
+  document.getElementById("question").innerHTML = stage.question;
+  let shuffled = [...stage.options].sort(()=>Math.random()-0.5);
+  shuffled.forEach(opt=>{
+    let btn = document.createElement("button");
+    btn.innerText = opt;
+    btn.onclick = ()=>checkAnswer(btn,opt);
+    document.getElementById("answers").appendChild(btn);
+  });
+  startTimer();
+}
+
+function checkAnswer(button, answer){
+  clearInterval(timer);
+  let stage = stages[currentStage];
+  let buttons = document.querySelectorAll("#answers button");
+  buttons.forEach(btn=>{
+    if(btn.innerText === stage.answer) btn.classList.add("correct");
+    btn.disabled = true;
+  });
+  if(answer === stage.answer){
+    score++;
+    money += 20;
+    document.getElementById("score").innerText = "النقاط: " + score;
+    document.getElementById("money").innerText = "فلوسك: " + money + " 💰";
+  }else{
+    button.classList.add("wrong");
+  }
+  document.getElementById("nextBtn").style.display="block";
+}
+
+function showCorrectAnswer(){
+  let stage = stages[currentStage];
+  let buttons = document.querySelectorAll("#answers button");
+  buttons.forEach(btn=>{
+    if(btn.innerText === stage.answer) btn.classList.add("correct");
+    btn.disabled = true;
+  });
+  document.getElementById("nextBtn").style.display="block";
+}
+
+function nextStage(){
+  currentStage++;
+  loadStage();
+}
+
+function buy(item,cost){
+  if(money>=cost){
+    money -= cost;
+    document.getElementById("money").innerText = "فلوسك: " + money + " 💰";
+    alert("مبروك! اشتريت " + item + " 🎀");
+  }else{
+    alert("ماعندكش فلوس كافية لشراء " + item);
+  }
+}
+</script>
+
+</body>
+</html>
